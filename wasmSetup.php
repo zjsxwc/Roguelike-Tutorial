@@ -1,5 +1,11 @@
 <?php
 
+//Build wasm
+exec("cargo build --release --target wasm32-unknown-unknown");
+exec("wasm-bindgen target/wasm32-unknown-unknown/release/untitled.wasm --out-dir wasm --no-modules --no-typescript");
+
+
+//PHP server start
 $dn = pathinfo(__FILE__)["dirname"];
 $dna = explode(DIRECTORY_SEPARATOR, $dn);
 $projectName = $dna[count($dna) - 1];
@@ -28,24 +34,19 @@ if (!is_dir($wasmDir)) {
     @mkdir($wasmDir);
 }
 file_put_contents($wasmDir . DIRECTORY_SEPARATOR . "index.html", $indexHtml);
+file_put_contents($wasmDir . DIRECTORY_SEPARATOR . "favicon.ico", "");
 
 $bgWasmPHP = <<<PHP
 <?php
 
 header("Content-Type: application/wasm");
-readfile(__DIR__ . DIRECTORY_SEPARATOR . pathinfo(__FILE__)["basename"]);
+\$wasmFile = str_replace(".php", "", pathinfo(__FILE__)["basename"]);
+readfile(__DIR__ . DIRECTORY_SEPARATOR . \$wasmFile);
 PHP;
 file_put_contents($wasmDir . DIRECTORY_SEPARATOR . $projectName . "_bg.wasm.php", $bgWasmPHP);
 
-echo <<<TEXT
+echo "\r\nStart run `php -S 0.0.0.0:7788 -t wasm`\r\n";
+exec("php -S 0.0.0.0:7788 -t wasm");
 
-Build wasm
-    cargo build --release --target wasm32-unknown-unknown
-    wasm-bindgen target/wasm32-unknown-unknown/release/untitled.wasm --out-dir wasm --no-modules --no-typescript
-    
-TEXT;
-
-
-echo "\r\nRun `php -S 0.0.0.0:7788 -t wasm`";
 
 
